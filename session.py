@@ -59,8 +59,12 @@ def safe_get(driver, url):
 def run_session(driver, persona, is_mobile):
     visited = set()
 
-    max_depth = random.randint(2, 4)
-    sites = random.sample(DOMAINS, k=max_depth)
+# Choose 2–4 domains, but never more than available
+requested = random.randint(2, 4)
+max_depth = min(requested, len(DOMAINS))
+
+sites = random.sample(DOMAINS, k=max_depth)
+
     log("[SESSION] Persona='{}' mobile={} Sites: {}".format(
         persona.name, is_mobile, " → ".join(sites))
     )

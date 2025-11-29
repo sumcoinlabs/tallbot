@@ -8,6 +8,7 @@ DOMAINS = [
     "https://www.sumcoin.org",
     "https://sumcoinindex.com",
     "https://sumcoinmarketplace.com",
+    "https://totalitywallet.io",
 ]
 
 ENTRY_POINTS = {
@@ -25,8 +26,7 @@ ENTRY_POINTS = {
     "https://sumcoinmarketplace.com": [
         "/",
         "/",
-        "/listings/",
-        "/sumcoin/",
+        "/ads/",
     ],
 }
 
