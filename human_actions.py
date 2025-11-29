@@ -40,6 +40,10 @@ CLOSE_TEXT_HINTS = [
     "accept",
 ]
 
+# We try to avoid clicking/hovering stuff in the very top header band
+# where sticky nav + AdSense overlays usually live.
+HEADER_Y_THRESHOLD = 120
+
 
 # -------------------------------------------------------------------
 # SCROLLING / SWIPING / HESITATION
@@ -115,6 +119,16 @@ def handle_popups(driver, persona):
             if size.get("width", 0) > 600 and size.get("height", 0) > 400:
                 continue
 
+            # make sure it's in view
+            try:
+                driver.execute_script(
+                    "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
+                    el,
+                )
+                time.sleep(random.uniform(0.2, 0.5))
+            except Exception:
+                pass
+
             actions = ActionChains(driver)
             actions.move_to_element(el).perform()
             log("[POPUP] Close control hovered: '{}'".format(text or aria or cls))
@@ -170,6 +184,35 @@ def hover_ads(driver, persona):
             continue
 
         try:
+            # Skip elements that appear stuck in the top header area
+            try:
+                loc = el.location or {}
+                y = loc.get("y", 0)
+                if y < HEADER_Y_THRESHOLD:
+                    log("[AD-HOVER] Skipping header/top candidate at y={}".format(y))
+                    continue
+            except Exception:
+                pass
+
+            # Bring into view
+            try:
+                driver.execute_script(
+                    "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
+                    el,
+                )
+                time.sleep(random.uniform(0.2, 0.5))
+            except Exception:
+                pass
+
+            # Only interact if visible
+            try:
+                if not el.is_displayed():
+                    log("[AD-HOVER] Candidate not displayed; skipping")
+                    continue
+            except Exception:
+                # if we can't determine, still try
+                pass
+
             actions = ActionChains(driver)
             actions.move_to_element(el).perform()
 
@@ -178,16 +221,25 @@ def hover_ads(driver, persona):
             log("[AD-HOVER] {} ({:.2f}s)".format(href, hover_time))
             time.sleep(hover_time)
 
-            # Click probability
+            # IMPORTANT: we keep click probability low and only for anchor links.
+            # This is not meant to auto-click AdSense iframes.
             p_click = AD_CLICK_CHANCE + getattr(persona, "ad_click_chance", 0.0)
             if p_click > 1.0:
                 p_click = 1.0
 
-            if random.random() < p_click:
-                el.click()
-                log("[AD-CLICK] {}".format(href))
-                time.sleep(random.uniform(2.0, 5.0))
-                return  # don't chain multiple ad clicks in a row
+            if href and random.random() < p_click:
+                try:
+                    el.click()
+                    log("[AD-CLICK] {}".format(href))
+                    time.sleep(random.uniform(2.0, 5.0))
+                    return  # don't chain multiple ad clicks in a row
+                except WebDriverException as e:
+                    msg = str(e)
+                    if "other element would receive the click" in msg or "is not clickable" in msg:
+                        log("[AD-CLICK-SKIP] Click blocked by overlay/iframe")
+                    else:
+                        log("[AD-ERROR] {}".format(msg))
+                    continue
         except StaleElementReferenceException:
             continue
         except WebDriverException as e:
@@ -235,6 +287,16 @@ def click_internal(driver, persona, visited, return_href=False):
             if href_raw.startswith("javascript:") or href_raw.startswith("#"):
                 continue
 
+            # Skip links stuck in the top header band (often nav / under adsense)
+            try:
+                loc = a.location or {}
+                y = loc.get("y", 0)
+                if y < HEADER_Y_THRESHOLD:
+                    log("[CLICK] Skipping header link at y={} href={}".format(y, href_raw))
+                    continue
+            except Exception:
+                pass
+
             full = urljoin(current_url, href_raw)
 
             if full in visited:
@@ -244,10 +306,39 @@ def click_internal(driver, persona, visited, return_href=False):
             if host != current_host:
                 continue
 
+            # bring into view before hover/click
+            try:
+                driver.execute_script(
+                    "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
+                    a,
+                )
+                time.sleep(random.uniform(0.2, 0.5))
+            except Exception:
+                pass
+
+            # only click if visible
+            try:
+                if not a.is_displayed():
+                    log("[CLICK] Candidate not displayed; skipping {}".format(full))
+                    continue
+            except Exception:
+                # if we can't tell, still attempt
+                pass
+
             actions = ActionChains(driver)
             actions.move_to_element(a).perform()
             log("[CLICK] → {}".format(full))
-            a.click()
+
+            try:
+                a.click()
+            except WebDriverException as e:
+                msg = str(e)
+                if "other element would receive the click" in msg or "is not clickable" in msg:
+                    log("[CLICK-SKIP] Click blocked by overlay/iframe for {}".format(full))
+                    continue
+                log("[CLICK-ERROR] {}".format(msg))
+                continue
+
             visited.add(full)
 
             time.sleep(random.uniform(1.0, 3.0))
