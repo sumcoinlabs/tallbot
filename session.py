@@ -59,11 +59,10 @@ def safe_get(driver, url):
 def run_session(driver, persona, is_mobile):
     visited = set()
 
-# Choose 2–4 domains, but never more than available
-requested = random.randint(2, 4)
-max_depth = min(requested, len(DOMAINS))
-
-sites = random.sample(DOMAINS, k=max_depth)
+    # Choose 2–4 domains, but never more than available
+    requested = random.randint(2, 4)
+    max_depth = min(requested, len(DOMAINS))
+    sites = random.sample(DOMAINS, k=max_depth)
 
     log("[SESSION] Persona='{}' mobile={} Sites: {}".format(
         persona.name, is_mobile, " → ".join(sites))
@@ -127,7 +126,6 @@ sites = random.sample(DOMAINS, k=max_depth)
                     dwell = random.uniform(5, 15)
                     log("[EXPLORE] dwell {:.1f}s after click".format(dwell))
                     time.sleep(dwell)
-                    # reset page_start_time for new page
                     page_start_time = time.time()
                 else:
                     log("[SKIP] unsafe URL {}".format(href))
