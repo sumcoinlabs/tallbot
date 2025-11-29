@@ -14,7 +14,7 @@ from config import (
 from utils import log
 
 
-def _choose_user_agent(persona, is_mobile: bool) -> str:
+def _choose_user_agent(persona, is_mobile):
     """
     Pick a user-agent string based on persona and mobile/desktop mode.
     """
@@ -22,17 +22,17 @@ def _choose_user_agent(persona, is_mobile: bool) -> str:
         pool = persona.ua_mobile_pool or list(range(len(MOBILE_USER_AGENTS)))
         idx = random.choice(pool)
         ua = MOBILE_USER_AGENTS[idx]
-        log(f"[UA] Mobile UA index {idx}")
+        log("[UA] Mobile UA index {}".format(idx))
         return ua
     else:
         pool = persona.ua_desktop_pool or list(range(len(DESKTOP_USER_AGENTS)))
         idx = random.choice(pool)
         ua = DESKTOP_USER_AGENTS[idx]
-        log(f"[UA] Desktop UA index {idx}")
+        log("[UA] Desktop UA index {}".format(idx))
         return ua
 
 
-def _create_chrome(user_agent: str, is_mobile: bool):
+def _create_chrome(user_agent, is_mobile):
     opts = ChromeOptions()
 
     # viewport size
@@ -42,7 +42,7 @@ def _create_chrome(user_agent: str, is_mobile: bool):
         opts.add_argument("--start-maximized")
 
     # user agent
-    opts.add_argument(f"--user-agent={user_agent}")
+    opts.add_argument("--user-agent={}".format(user_agent))
 
     # anti-automation flags
     opts.add_argument("--disable-blink-features=AutomationControlled")
@@ -74,11 +74,12 @@ def _create_chrome(user_agent: str, is_mobile: bool):
     return driver
 
 
-def _create_firefox(user_agent: str, is_mobile: bool):
+def _create_firefox(user_agent, is_mobile):
     opts = FirefoxOptions()
 
     # Usually leave window size default or set manually
     if is_mobile:
+        # This is a light touch; you can tweak if needed
         opts.set_preference("layout.css.devPixelsPerPx", "1.0")
 
     # user agent override
@@ -91,7 +92,7 @@ def _create_firefox(user_agent: str, is_mobile: bool):
     return driver
 
 
-def create_driver(persona, use_xvfb: bool = False, browser_name: str | None = None):
+def create_driver(persona, use_xvfb=False, browser_name=None):
     """
     Creates a Selenium driver with:
       - persona-based UA
@@ -116,9 +117,9 @@ def create_driver(persona, use_xvfb: bool = False, browser_name: str | None = No
     # which browser?
     if browser_name is None:
         browser_name = choose_browser_name()
-    browser_name = browser_name.lower()
+    browser_name = str(browser_name).lower()
 
-    log(f"[BROWSER] {browser_name} (mobile={is_mobile})")
+    log("[BROWSER] {} (mobile={})".format(browser_name, is_mobile))
 
     if browser_name == "chrome":
         driver = _create_chrome(user_agent, is_mobile)
