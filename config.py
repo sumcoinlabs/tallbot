@@ -2,130 +2,93 @@
 import random
 
 # -------------------------------------------------------------------
-# GLOBAL SITE MAP
+# DOMAINS AND ENTRY POINTS
 # -------------------------------------------------------------------
-
-# Root domains Tallbot is allowed to start from.
 DOMAINS = [
+    "https://www.sumcoin.org",
     "https://sumcoinindex.com",
     "https://sumcoinmarketplace.com",
-    "https://www.sumcoin.org",
-    # Uncomment / extend as needed:
-    # "https://digibytewallet.org",
-    # "https://slicewallet.org",
-    # "https://totalitywallet.io",
-    # "https://sumcoinwallet.org",
 ]
 
-# Entry points per domain. Paths are joined onto the domain with urljoin.
 ENTRY_POINTS = {
     "https://www.sumcoin.org": [
-        "/",                     # homepage
-        "/open-price-feed/",     # price feed page
-        "/blog/",                # blog index if present
-        "/category/sumcoin/",    # example category
+        "/",
+        "/open-price-feed/",
+        "/blog/",
+        "/category/sumcoin/",
     ],
     "https://sumcoinindex.com": [
-        "/",                     # index home
-        "/transactions/",        # transaction stats
-        "/markets/",             # if/when you add it
+        "/",
+        "/transactions/",
+        "/markets/",
     ],
     "https://sumcoinmarketplace.com": [
-        "/",                     # marketplace home
-        "/listings/",            # listing index
-        "/sumcoin/",             # category/tag
+        "/",
+        "/",
+        "/listings/",
+        "/sumcoin/",
     ],
-    # Add more domains / paths as you bring more sites online
 }
 
 # -------------------------------------------------------------------
 # USER AGENT POOLS
-#   Personas will reference these by index via ua_mobile_pool / ua_desktop_pool.
 # -------------------------------------------------------------------
-
 MOBILE_USER_AGENTS = [
-    # 0
-    (
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) "
-        "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
-        "Mobile/15E148 Safari/604.1"
-    ),
-    # 1
-    (
-        "Mozilla/5.0 (Linux; Android 14; Pixel 7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/122.0.0.0 Mobile Safari/537.36"
-    ),
-    # 2
-    (
-        "Mozilla/5.0 (Linux; Android 13; SM-G996U) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/121.0.0.0 Mobile Safari/537.36"
-    ),
-    # 3
-    (
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) "
-        "AppleWebKit/605.1.15 (KHTML, like Gecko) "
-        "CriOS/119.0.0.0 Mobile/15E148 Safari/604.1"
-    ),
+    # iPhone
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) "
+    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    # Android Chrome
+    "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36",
+    # Another Android variant
+    "Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36",
 ]
 
 DESKTOP_USER_AGENTS = [
-    # 0
-    (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/122.0.0.0 Safari/537.36"
-    ),
-    # 1
-    (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3) "
-        "AppleWebKit/605.1.15 (KHTML, like Gecko) "
-        "Version/17.3 Safari/605.1.15"
-    ),
-    # 2
-    (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:123.0) "
-        "Gecko/20100101 Firefox/123.0"
-    ),
-    # 3
-    (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) "
-        "Gecko/20100101 Firefox/122.0"
-    ),
+    # Windows
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    # macOS
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3) AppleWebKit/605.1.15 "
+    "(KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+    # Linux
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
 ]
 
 # -------------------------------------------------------------------
-# BROWSER MIX
-#   Used by driver_setup to bias which browser gets picked.
+# BROWSER WEIGHTS
 # -------------------------------------------------------------------
-
 BROWSER_WEIGHTS = {
     "firefox": 0.7,
     "chrome": 0.3,
 }
 
-def choose_browser_name() -> str:
-    names = list(BROWSER_WEIGHTS.keys())
-    weights = list(BROWSER_WEIGHTS.values())
-    return random.choices(names, weights=weights, k=1)[0]
-
-
 # -------------------------------------------------------------------
-# DEFAULT TIMING (scaled by persona)
+# TIMING / BEHAVIOR CONSTANTS
 # -------------------------------------------------------------------
-# All times here are in seconds; persona.dwell_multiplier scales them.
+BASE_MIN_DWELL = 90          # min seconds per domain
+BASE_MAX_DWELL = 240         # max seconds per domain
+BASE_MAX_CLICKS = 4          # max internal clicks per domain
 
-BASE_MIN_DWELL = 90         # minimum dwell time per site (before scaling)
-BASE_MAX_DWELL = 240        # maximum dwell time per site (before scaling)
-BASE_MAX_CLICKS = 4         # max internal clicks per domain (before dwell limit)
-BASE_AD_HOVER_BASE = 0.51   # base probability for ad-hover, persona adds on top
-BASE_SCROLL_STEP = (350, 750)  # min/max scroll delta in px
+# scroll distance in px (min, max)
+BASE_SCROLL_STEP = (350, 750)
 
+# log file
 LOG_FILE = "traffic_engine.log"
 
+# Base probability of clicking an ad *per hover*.
+AD_CLICK_CHANCE = 0.055
+
+# Minimum seconds on a page before Tallbot is allowed to click any link.
+MIN_TIME_BEFORE_CLICK = 10
+
 # -------------------------------------------------------------------
-# AD CLICK SETTING (GLOBAL BASE RATE)
-#   Final per-ad-click probability = AD_CLICK_CHANCE + persona.ad_click_chance
+# BROWSER PICKER
 # -------------------------------------------------------------------
-AD_CLICK_CHANCE = 0.055   # ~5.5% base chance per *ad-hover event* (before persona)
+def choose_browser_name():
+    names = list(BROWSER_WEIGHTS.keys())
+    weights = [BROWSER_WEIGHTS[n] for n in names]
+    # random.choices is available in Python 3.6+
+    return random.choices(names, weights=weights, k=1)[0]
