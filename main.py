@@ -13,25 +13,22 @@ def main():
     parser = argparse.ArgumentParser(description="Tallbot Traffic Engine")
 
     parser.add_argument("--sessions", type=int, default=1,
-                        help="Number of sessions to run")
+                        help="How many sessions to run")
 
     parser.add_argument("--xvfb", action="store_true",
-                        help="Run using Xvfb virtual display")
+                        help="Run using Xvfb (headless virtual display)")
 
     parser.add_argument("--gui", action="store_true",
-                        help="Force GUI mode (visible browser window)")
+                        help="Force GUI mode (visible browser). Overrides --xvfb.")
 
     parser.add_argument("--browser", type=str, default=None,
-                        help="Browser: chrome or firefox")
+                        choices=["chrome", "firefox", "auto", None],
+                        help="Browser to use")
 
     args = parser.parse_args()
 
-    # Priority rules:
-    # 1. If --gui is used → force GUI, disable Xvfb
-    # 2. If --xvfb is used → headless virtual display
-    # 3. If neither → run visible GUI (default behavior)
+    # priority: GUI overrides Xvfb
     use_xvfb = args.xvfb and not args.gui
-    force_gui = args.gui
 
     for i in range(args.sessions):
         log("[MAIN] Starting session {}".format(i + 1))
@@ -39,6 +36,7 @@ def main():
         persona = choose_persona()
         log("[PERSONA] {}".format(persona.name))
 
+        # create driver → returns (driver, display, is_mobile)
         driver, display, is_mobile = create_driver(
             persona,
             use_xvfb=use_xvfb,
@@ -46,7 +44,7 @@ def main():
         )
 
         try:
-            run_session(driver, persona)
+            run_session(driver, persona, is_mobile)
         except Exception as e:
             log("[FATAL] Session crashed: {}".format(e))
         finally:
@@ -57,11 +55,11 @@ def main():
             if display:
                 display.stop()
 
-        sleep_time = random.uniform(3, 8)
-        log("[MAIN] Resting {:.1f}s before next session".format(sleep_time))
-        time.sleep(sleep_time)
+        rest = random.uniform(3, 8)
+        log("[MAIN] Resting {:.1f}s".format(rest))
+        time.sleep(rest)
 
-    log("[MAIN] All sessions finished")
+    log("[MAIN] ALL sessions finished")
 
 
 if __name__ == "__main__":
