@@ -5,28 +5,43 @@ import random
 # DOMAINS AND ENTRY POINTS
 # -------------------------------------------------------------------
 DOMAINS = [
-    "https://www.sumcoin.org",
     "https://sumcoinindex.com",
     "https://sumcoinmarketplace.com",
-    "https://totalitywallet.io",
+    "https://www.sumcoin.org",
+#    "https://digibytewallet.org",
+#    "https://slicewallet.org",
+#    "https://totalitywallet.io",
+#    "https://sumcoinwallet.org",
 ]
 
 ENTRY_POINTS = {
-    "https://www.sumcoin.org": [
-        "/",
-        "/open-price-feed/",
-        "/blog/",
-        "/category/sumcoin/",
-    ],
     "https://sumcoinindex.com": [
-        "/",
-        "/transactions/",
-        "/markets/",
+        "/", "/coin/bitcoin", "/faucets/", "/coin/dogecoin",
+        "/coin/litecoin", "/coin/ethereum", "/coin/xrp"
     ],
+
     "https://sumcoinmarketplace.com": [
-        "/",
-        "/",
-        "/ads/",
+        "/", "/ads/", "/privacy/", "/ads/vehicles/"
+    ],
+
+    "https://www.sumcoin.org": [
+        "/", "/about/", "/faq", "/migrations/", "/buy-adspace/"
+    ],
+
+    "https://digibytewallet.org": [
+        "/", "/faucet/", "/recovery/", "/news/"
+    ],
+
+    "https://sumcoinwallet.org": [
+        "/", "/news/", "/recovery/"
+    ],
+
+    "https://slicewallet.org": [
+        "/", "/privacy/", "/news/about.html"
+    ],
+
+    "https://totalitywallet.io": [
+        "/", "/privacy/"
     ],
 }
 
