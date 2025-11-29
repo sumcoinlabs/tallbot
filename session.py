@@ -2,10 +2,23 @@
 import random
 import time
 from urllib.parse import urljoin
+
 from selenium.webdriver.support.ui import WebDriverWait
 
-from config import *
-from human_actions import *
+from config import (
+    DOMAINS,
+    ENTRY_POINTS,
+    BASE_MIN_DWELL,
+    BASE_MAX_DWELL,
+    BASE_MAX_CLICKS,
+)
+from human_actions import (
+    desktop_scroll,
+    mobile_swipe,
+    micro_hesitate,
+    hover_ads,
+    click_internal,
+)
 from utils import log
 
 # -----------------------------------------------
@@ -26,7 +39,7 @@ BLOCKED_KEYWORDS = [
     "cdn-cgi",
     "privacy",
     "support",
-    "terms"
+    "terms",
 ]
 
 
@@ -48,7 +61,7 @@ def is_safe_url(href: str) -> bool:
 # ---------------------------------------------------------
 def safe_get(driver, url):
     attempts = 0
-    while attempts < 3:   # 1st attempt + 2 retries
+    while attempts < 3:  # 1st attempt + 2 retries
         try:
             driver.get(url)
             return True
@@ -67,7 +80,7 @@ def safe_get(driver, url):
 # ---------------------------------------------------------
 # MAIN SESSION LOOP
 # ---------------------------------------------------------
-def run_session(driver, persona):
+def run_session(driver, persona, is_mobile: bool):
     visited = set()
 
     # Pick 2–4 domains for this session
@@ -75,9 +88,7 @@ def run_session(driver, persona):
     sites = random.sample(DOMAINS, k=max_depth)
 
     log("[SESSION] Sites: " + " → ".join(sites))
-
-    # Choose mobile or desktop mode per-persona
-    is_mobile = random.random() < persona.mobile_bias
+    log(f"[SESSION] Persona: {persona.name} (mobile={is_mobile})")
 
     # -----------------------------------------------------
     # Visit each domain in the list
@@ -95,13 +106,14 @@ def run_session(driver, persona):
             WebDriverWait(driver, 15).until(
                 lambda d: d.execute_script("return document.readyState") == "complete"
             )
-        except:
+        except Exception:
             log("[WARN] Page load state unknown (timeout)")
 
         log(f"[ENTRY] {url}")
 
         # Session dwell time for this site
-        end_time = time.time() + random.randint(BASE_MIN_DWELL, BASE_MAX_DWELL) * persona.dwell_multiplier
+        dwell_base = random.randint(BASE_MIN_DWELL, BASE_MAX_DWELL)
+        end_time = time.time() + dwell_base * persona.dwell_multiplier
         clicks = 0
 
         # -----------------------------------------------------
